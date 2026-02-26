@@ -247,138 +247,89 @@
         </section>
     </main>
 </div>
-
 <script>
     lucide.createIcons();
 
-// --- CONFIGURATION ---
-// Ensure your key starts with "nvapi-"
-lucide.createIcons();
+    async function runAIAnalysis() {
+        const btn = document.getElementById('analyze-trigger');
+        const output = document.getElementById('prediction-output');
+        const fill = document.getElementById('risk-fill');
+        const reasoningDiv = document.getElementById('ai-reasoning');
+        const statusText = document.getElementById('risk-status');
+        const summaryText = document.getElementById('ai-summary');
+        const recommendationText = document.getElementById('ai-recommendation');
 
-// --- CONFIGURATION ---
-const NVIDIA_API_KEY = ""; 
+        // 1. UI Loading State
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader" class="spin"></i> CONSULTING NEURAL CORE...`;
+        lucide.createIcons(); // Refresh icons for the loader
+        
+        // Add a slight "glitch" effect to the button during processing
+        btn.style.opacity = "0.7";
+        btn.style.letterSpacing = "4px";
 
-async function runAIAnalysis() {
-    const btn = document.getElementById('analyze-trigger');
-    const output = document.getElementById('prediction-output');
-    const fill = document.getElementById('risk-fill');
-    const reasoningDiv = document.getElementById('ai-reasoning');
+        // 2. Simulate Network/Neural Processing Delay (2.5 seconds)
+        await new Promise(resolve => setTimeout(resolve, 2500));
 
-    // 1. Validation
-    if (NVIDIA_API_KEY.includes("YOUR_ACTUAL_KEY")) {
-        alert("Please update the script with your actual NVIDIA API Key.");
-        return;
-    }
+        // 3. Dummy Data Generation Logic
+        // In a real scenario, this is where your API call results would go
+        const dummyResults = {
+            risk: 88,
+            level: "High",
+            reasoning: "System detected high inflammatory markers (CRP: 9mg/L) coupled with persistent fever and recent tropical travel. Potential Viral Hemorrhagic Fever or Severe Malarial infection flagged for immediate validation.",
+            machine: "BioFire FilmArray (Global Fever Panel)"
+        };
 
-    // 2. UI Loading State
-    btn.disabled = true;
-    btn.innerHTML = `<span class="loader"></span> CONSULTING NEURAL CORE...`;
-    btn.style.opacity = "0.7";
-
-    // 3. Gather Patient Data
-    const context = {
-        id: document.getElementById('patient-id')?.innerText || "UNK-001",
-        name: document.getElementById('patient-name')?.innerText || "Patient",
-        vitals: document.getElementById('patient-age-gender')?.innerText || "N/A",
-        fever: document.getElementById('val-fever')?.innerText || "None",
-        cough: document.getElementById('val-cough')?.innerText || "None",
-        travel: document.getElementById('val-travel')?.innerText || "None",
-        crp: document.getElementById('val-crp')?.innerText || "0"
-    };
-
-    const prompt = `Analyze this medical case:
-    Patient: ${context.name} (${context.vitals})
-    Symptoms: Fever ${context.fever}, Cough ${context.cough}
-    Lab: CRP ${context.crp}
-    Travel: ${context.travel}
-    
-    Task: 
-    1. Determine Risk Level (High/Medium/Low).
-    2. Provide a 2-sentence clinical reasoning.
-    3. Recommend a specific molecular machine (BioFire, GeneXpert, or Abbott).
-    
-    Return ONLY a JSON object in this format: 
-    {"risk": 85, "level": "High", "reasoning": "text", "machine": "text"}`;
-
-    try {
-        // We use a CORS proxy to allow browser-based requests to NVIDIA
-        const proxy = "https://corsproxy.io/?";
-        const apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
-
-        const response = await fetch(proxy + apiUrl, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${NVIDIA_API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "deepseek/deepseek-r1", // The 397B Reasoning Model ID
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.2,
-                max_tokens: 2048 // Higher limit for reasoning models
-            })
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Server Error: ${response.status} - ${errText}`);
-        }
-
-        const data = await response.json();
-        let rawContent = data.choices[0].message.content;
-
-        // --- CLEANING THE REASONING OUTPUT ---
-        // Remove <think> tags and Markdown formatting
-        let cleanJSON = rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-        cleanJSON = cleanJSON.replace(/```json|```/g, "").trim();
-
-        // Find the first { and last } to ensure valid JSON extraction
-        const firstBracket = cleanJSON.indexOf('{');
-        const lastBracket = cleanJSON.lastIndexOf('}');
-        cleanJSON = cleanJSON.substring(firstBracket, lastBracket + 1);
-
-        const result = JSON.parse(cleanJSON);
-
-        // --- UI UPDATE ---
+        // 4. UI Transition
         btn.style.display = "none";
         output.style.display = "block";
         
+        // GSAP Animation for smooth entry
         if (window.gsap) {
-            gsap.from(output, { y: 30, opacity: 0, duration: 0.8 });
+            gsap.fromTo(output, 
+                { y: 50, opacity: 0 }, 
+                { y: 0, opacity: 1, duration: 1, ease: "power4.out" }
+            );
         }
 
-        document.getElementById('risk-status').innerText = `${result.level.toUpperCase()} RISK DETECTED`;
-        document.getElementById('ai-summary').innerText = `Neural analysis complete for ${context.id}.`;
-        document.getElementById('ai-recommendation').innerText = `Recommended: ${result.machine}`;
-        reasoningDiv.innerHTML = `<p>> ANALYSIS: ${result.reasoning}</p>`;
-
+        // 5. Populate Data
+        statusText.innerText = `${dummyResults.level.toUpperCase()} RISK DETECTED`;
+        summaryText.innerText = `Neural analysis complete for MH-AI-000145. Pattern match: 94.2%`;
+        recommendationText.innerText = `Immediate deployment of ${dummyResults.machine} protocol.`;
+        
+        // Typewriter effect for reasoning
+        reasoningDiv.innerHTML = `<p style="color: var(--accent)">> INITIALIZING REASONING ENGINE...</p>`;
         setTimeout(() => {
-            const riskValue = parseInt(result.risk) || 0;
-            fill.style.width = `${riskValue}%`;
-            if (riskValue > 70) {
-                document.body.style.boxShadow = "inset 0 0 100px rgba(255, 71, 87, 0.2)";
+            reasoningDiv.innerHTML += `<p>> ANALYSIS: ${dummyResults.reasoning}</p>`;
+        }, 500);
+
+        // 6. Animate Risk Bar and Background Warning
+        setTimeout(() => {
+            fill.style.width = `${dummyResults.risk}%`;
+            if (dummyResults.risk > 70) {
+                document.body.style.transition = "box-shadow 2s ease";
+                document.body.style.boxShadow = "inset 0 0 100px rgba(255, 71, 87, 0.3)";
             }
-        }, 100);
-
-    } catch (error) {
-        console.error("Diagnostic Error:", error);
-        btn.disabled = false;
-        btn.innerHTML = "RETRY ANALYSIS";
-        btn.style.opacity = "1";
-        alert(`Analysis Failed: ${error.message}`);
+        }, 300);
     }
-}
 
-// Parallax for Health Card
-document.addEventListener('mousemove', (e) => {
-    const card = document.getElementById('v-card');
-    if (card) {
-        const x = (window.innerWidth / 2 - e.pageX) / 25;
-        const y = (window.innerHeight / 2 - e.pageY) / 25;
-        card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
-    }
-});
+    // Parallax for Health Card
+    document.addEventListener('mousemove', (e) => {
+        const card = document.getElementById('v-card');
+        if (card) {
+            const x = (window.innerWidth / 2 - e.pageX) / 30;
+            const y = (window.innerHeight / 2 - e.pageY) / 30;
+            card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+        }
+    });
+
+    // Add simple CSS for the loader icon
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .spin { animation: rotate 2s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(style);
 </script>
-
 </body>
 </html>
